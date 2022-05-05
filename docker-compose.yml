@@ -1,0 +1,75 @@
+version: '3.8'
+
+volumes:
+  mongo_volume:
+  postgres_volume:
+
+networks:
+  micro-network:
+    driver: bridge
+
+services: 
+  mongo:
+    image: mongo:4.4.3
+    # ports:
+    #   - ${MONGODB_PORT}:${MONGODB_PORT}
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASSWORD}
+    volumes:
+      - mongo_volume:/data/db
+    networks:
+      - micro-network
+
+  postgres:
+    image: postgres:13
+    # ports:
+    #   - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data
+    networks:
+      - micro-network
+
+  rotten:
+    image: jhtoigo/rotten-potatoes:micro-v1
+    # build:
+    #   context: ./rotten-potatoes-ms_desafio/src/
+    #   dockerfile: Dockerfile
+    ports:
+      - 8383:5000
+    networks:
+      - micro-network
+    environment:
+      MONGODB_URI: mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_DB}:${MONGODB_HOST}/${MONGODB_DB}
+      MOVIE_SERVICE_URI: http://movie:8181
+      REVIEW_SERVICE_URI: http://review
+    depends_on:
+      - mongo
+      - movie
+      - review
+
+  movie:
+    image: jhtoigo/movie:v1
+    # build:
+    #   context: ./movie_desafio/src/
+    #   dockerfile: Dockerfile
+    networks:
+     - micro-network
+    environment:
+      MONGODB_URI: mongodb://${MONGODB_USERNAME}:${MONGODB_PASSWORD}@${MONGODB_HOST}:${MONGODB_PORT}/${MONGODB_DB}
+    depends_on:
+      - mongo
+
+  review:
+    image: jhtoigo/review:v1
+    # build:
+    #   context: ./review_desafio/src/
+    #   dockerfile: Dockerfile
+    networks:
+     - micro-network
+    environment:
+      ConnectionStrings__MyConnection: Host=${POSTGRES_HOST};Database=${POSTGRES_DB};Username=${POSTGRES_USERNAME};Password=${POSTGRES_PASSWORD};
+    depends_on:
+      - postgres

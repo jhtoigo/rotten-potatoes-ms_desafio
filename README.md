@@ -1,5 +1,12 @@
 # Projeto Rotten Tomatoes Microsserviços
 
+Para subir o projeto utilize o comando:
+
+```
+docker-compose up -d
+```
+Para acessar utilize a URL http://localhost:8083
+
 ## Estrutura do projeto
 Esse projeto é baseado em uma aquitetura de Microsserviços e depende de outros 2 projetos pra funcionar
 
